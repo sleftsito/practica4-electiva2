@@ -1,0 +1,38 @@
+name: Alerta de Notificación
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-notify:
+    name: Ejecutar Programa y Notificar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Ejecutar Programa Hola Mundo
+        run: node index.js
+
+      - name: Enviar notificación a ntfy.sh/devops-itla
+        if: always()
+        env:
+          STATUS: ${{ job.status }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          curl \
+            -H "Title: GitHub Actions - Push a Main ($STATUS)" \
+            -H "Priority: high" \
+            -H "Tags: white_check_mark,rocket" \
+            -d "Se ha subido nuevo código a la rama main en $REPO por $ACTOR. Mensaje de commit: $COMMIT_MSG" \
+            https://ntfy.sh/devops-itla
